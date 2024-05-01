@@ -16,14 +16,13 @@ supported_languages_codes = [
 ]
 
 def IsValidLanguage(language):
-    try:
-        index = supported_languages.index(language)
+    if language in supported_languages:
         return True
-    except ValueError:
-        print(f"Invalid language \"{language}\"")
-        return False
+    print(f"Invalid language \"{language}\"")
+    return False
 
 def Translate(message, curr_language, language):
+    if 0 == len(message): return ""
     if IsValidLanguage(curr_language) and IsValidLanguage(language):
         curr_language_code = supported_languages_codes[supported_languages.index(curr_language)]
         language_code = supported_languages_codes[supported_languages.index(language)]

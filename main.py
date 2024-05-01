@@ -15,6 +15,18 @@ client = discord.Client(intents=intents)
 
 servers = []
 
+async def IsMedia(message):
+    length = len(message)
+    if length >= 4:
+        # check for url
+        if "http://" == message[:7] or "https://" == message[:8]:
+            return True
+        # check for other media
+        ext = message[length-4:]
+        if ext in [".png", ".jpg", "jpeg", ".mp4", ".mov", ".gif"]:
+            return True
+    return False
+
 async def GetPFP(server, username):
     for emoji in server.emojis:
         if emoji.name == username:
@@ -35,13 +47,9 @@ async def on_ready():
             print(f"  {channel.cid}")
 
 @client.event
-async def on_shard_ready(shard_id):
-    print(f"{client.user} is online at {shard_id}")
-
-@client.event
 async def on_message(incoming_message):
     # early reject any empty messages / messages from bot itself
-    if incoming_message.content == "":
+    if incoming_message.content == "" and 0 == len(incoming_message.attachments):
         return
     if incoming_message.author.id == client.user.id:
         return
@@ -57,6 +65,7 @@ async def on_message(incoming_message):
     # testing
     if tokens[0].lower() == "!test":
         await incoming_message.channel.send(f"{message} {username} :3 <@{str(incoming_message.author.id)}>")
+        return
 
     # channel registration
     if tokens[0].lower() == "!register":
@@ -86,24 +95,31 @@ async def on_message(incoming_message):
 `!register list`  view list of registered channels\n\
 `!register #[channel] [language]`  register a channel\n\
 `!register #[channel] none`  unregister a channel")
+        return
+
+    # get embed content from message (images, videos, etc.)
+    embeds = []
+    for a in incoming_message.attachments:
+        embed = discord.Embed(description=a.url)
+        embed.set_image(url=a.url)
+        embeds.append(embed)
 
     # check if the message comes from one of the translator channels
     server = servers[servers.index(server_name)]
-    try:
+    cid = f"<#{str(incoming_message.channel.id)}>"
+    if cid in server.channels:
         # get channel where message is coming from (if registered)
-        index = server.channels.index(f"<#{str(incoming_message.channel.id)}>")
-        original_channel = server.channels[index]
+        original_channel = server.channels[server.channels.index(cid)]
         # translate message into every registered channel
         for channel in server.channels:
             if channel == original_channel: continue
             #print(f"translating {original_channel.cid} => {channel.cid}")
             discord_channel = client.get_channel(channel.getID())
-            translated_message = Translate(message, original_channel.language, channel.language)
+            translated_message = message
+            if not await IsMedia(message):
+                translated_message = Translate(message, original_channel.language, channel.language)
             pfp = await GetPFP(incoming_message.guild, username)
-            await discord_channel.send(f"{pfp} `{nickname}`  {translated_message}")
-    except ValueError:
-        # ignore msg if not in registered channel
-        None
+            await discord_channel.send(f"{pfp} `{nickname}`  {translated_message}", embeds=embeds)
 
 # init bot
 TOKEN = open("token.txt").read()

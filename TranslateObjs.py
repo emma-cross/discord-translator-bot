@@ -34,6 +34,7 @@ class TranslateServer:
                         self.registerChannel(TranslateChannel(tokens[0], tokens[1]))
                 file.close()
         except FileNotFoundError:
+            # not a problem - will eventually make a file when channels are registered
             None
 
     def write(self):
@@ -44,11 +45,10 @@ class TranslateServer:
             file.close()
     
     def registerChannel(self, channel):
-        try:
+        if channel.cid in self.channels:
             # update existing channel registry 
-            index = self.channels.index(channel.cid)
-            self.channels[index] = channel
-        except ValueError:
+            self.channels[self.channels.index(channel.cid)] = channel
+        else:
             # check that the given language is valid
             if IsValidLanguage(channel.language):
                 #@todo check that language hasnt been registered already
@@ -62,5 +62,3 @@ class TranslateServer:
     def unregisterChannel(self, cid):
         # unregister channel
         self.channels.remove(cid)
-
-
