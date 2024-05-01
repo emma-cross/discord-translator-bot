@@ -1,0 +1,5 @@
+* link translated messages to original (in case translation is bad)
+* "translation groups" - messages are only translated between a group of channels
+* pfp
+* better name
+* start bot remotely from websitebyebba ("discord bots" page)
