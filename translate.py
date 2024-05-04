@@ -5,7 +5,7 @@ translator = Translator()
 
 supported_languages = [
     "English",
-    "한굴",
+    "한국어",
     "日本語",
 ]
 
